@@ -1,0 +1,26 @@
+# Build directories
+build/
+cmake-build-*/
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# macOS
+.DS_Store
+
+# Compiled output
+*.o
+*.a
+*.dylib
+*.so
+
+# libnpc build artifacts (inside third_party)
+third_party/libnpc/
+third_party/libnpc/build/
+third_party/libnpc/build-pic/
+third_party/libnpc/build-shared/
+third_party/libnpc/lib/

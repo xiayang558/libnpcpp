@@ -1,0 +1,924 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>libnpc++ — C++17 Numerical Computing Library</title>
+<style>
+/* ═══════════════════════════════════════════════════ theme ═══ */
+:root {
+    --bg: #ffffff; --fg: #1e293b; --fg2: #475569; --border: #e2e8f0;
+    --accent: #3b82f6; --accent2: #2563eb; --code-bg: #f8fafc;
+    --hover: #eff6ff; --tag: #dbeafe; --sidebar: #f8fafc;
+    --param: #059669; --type: #7c3aed; --warn: #fef3c7; --shadow: 0 1px 3px rgba(0,0,0,0.08);
+    --grad1: #3b82f6; --grad2: #8b5cf6;
+}
+@media (prefers-color-scheme: dark) {
+:root { --bg: #0c1222; --fg: #e2e8f0; --fg2: #94a3b8; --border: #1e293b;
+    --accent: #60a5fa; --accent2: #3b82f6; --code-bg: #0f172a;
+    --hover: #1e293b; --tag: #1e3a5f; --sidebar: #0f172a;
+    --shadow: 0 1px 3px rgba(0,0,0,0.3); }
+}
+*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+html { scroll-behavior: smooth; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, Roboto, sans-serif;
+    background: var(--bg); color: var(--fg); line-height: 1.6; }
+a { color: var(--accent); text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+/* ═══════════════════════════════════════════════════ sidebar ═══ */
+#sidebar { position: fixed; top:0; left:0; width: 260px; height: 100vh;
+    background: var(--sidebar); border-right: 1px solid var(--border);
+    z-index: 100; display: flex; flex-direction: column; overflow: hidden; }
+.sidebar-header { padding: 20px; border-bottom: 1px solid var(--border); flex-shrink:0; }
+.sidebar-header .logo { font-size: 22px; font-weight: 800; letter-spacing: -0.5px; }
+.sidebar-header .logo span { background: linear-gradient(135deg, var(--grad1), var(--grad2));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+.sidebar-header .ver { font-size: 12px; color: var(--fg2); margin-top: 2px; }
+#lang-toggle { display: flex; margin-top: 10px; gap: 0; }
+#lang-toggle button { flex:1; padding: 4px 0; border: 1px solid var(--border); background: var(--bg);
+    color: var(--fg2); cursor: pointer; font-size: 12px; font-weight: 500; }
+#lang-toggle button:first-child { border-radius: 4px 0 0 4px; }
+#lang-toggle button:last-child { border-radius: 0 4px 4px 0; }
+#lang-toggle button.on { background: var(--accent); color: #fff; border-color: var(--accent); }
+#search-wrap { padding: 12px 16px; border-bottom: 1px solid var(--border); flex-shrink:0; position:relative; }
+#search-box { width: 100%; padding: 8px 12px; border: 1px solid var(--border);
+    border-radius: 6px; font-size: 13px; background: var(--bg); color: var(--fg); outline: none; }
+#search-box:focus { border-color: var(--accent); box-shadow: 0 0 0 2px rgba(59,130,246,0.15); }
+#search-results { position: absolute; top: 100%; left: 12px; right: 12px; background: var(--bg);
+    border: 1px solid var(--border); border-radius: 8px; box-shadow: var(--shadow);
+    max-height: 260px; overflow-y: auto; z-index: 50; display: none; }
+.search-item { padding: 8px 12px; cursor: pointer; border-bottom: 1px solid var(--border); font-size: 13px; }
+.search-item:last-child { border-bottom: none; }
+.search-item:hover { background: var(--hover); }
+.search-item .sn { font-weight: 600; color: var(--accent); }
+.search-item .sm { font-size: 11px; color: var(--fg2); }
+.sidebar-nav { flex:1; overflow-y: auto; padding: 8px 0; }
+.sidebar-nav details { margin: 0; }
+.sidebar-nav details summary { padding: 6px 20px; font-size: 12px; font-weight: 600; text-transform: uppercase;
+    letter-spacing: 0.5px; color: var(--fg2); cursor: pointer; outline: none; user-select: none;
+    display: flex; align-items: center; gap: 4px; }
+.sidebar-nav details summary::marker { font-size: 10px; }
+.sidebar-nav details summary:hover { color: var(--accent); }
+.sidebar-nav details a { display: block; padding: 5px 20px 5px 32px; font-size: 13px;
+    color: var(--fg); border-left: 2px solid transparent; transition: 0.1s; }
+.sidebar-nav details a:hover, .sidebar-nav details a.here { background: var(--hover);
+    border-left-color: var(--accent); color: var(--accent); text-decoration: none; }
+.sidebar-nav details a em { font-style: normal; color: var(--fg2); font-size: 11px; margin-left: 4px; }
+
+/* ═══════════════════════════════════════════════════ main ═══ */
+#main { margin-left: 260px; min-height: 100vh; }
+.page { display: none; padding: 48px 56px; max-width: 860px; }
+.page.on { display: block; }
+
+/* home hero */
+.hero { display: none; padding: 80px 56px 48px; max-width: 860px; }
+.hero.on { display: block; }
+.hero h1 { font-size: 40px; font-weight: 800; letter-spacing: -1px; line-height: 1.1; margin-bottom: 12px; }
+.hero h1 span { background: linear-gradient(135deg, var(--grad1), var(--grad2));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+.hero p.lead { font-size: 17px; color: var(--fg2); max-width: 560px; margin-bottom: 24px; }
+.hero .badges { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 32px; }
+.hero .badges span { padding: 4px 12px; border-radius: 20px; font-size: 13px; font-weight: 500;
+    background: var(--tag); color: var(--accent); }
+.hero .cta { margin-bottom: 40px; }
+.hero .cta a { display: inline-block; padding: 10px 24px; border-radius: 8px;
+    background: var(--accent); color: #fff; font-weight: 600; font-size: 14px; text-decoration: none;
+    margin-right: 8px; transition: 0.15s; }
+.hero .cta a:hover { background: var(--accent2); }
+.hero .cta a.gh { background: var(--code-bg); color: var(--fg); border: 1px solid var(--border); }
+.hero .cta a.gh:hover { background: var(--hover); }
+
+/* feature grid */
+.features { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin: 40px 0; }
+.features .card { padding: 20px; border: 1px solid var(--border); border-radius: 10px; transition: 0.15s; }
+.features .card:hover { border-color: var(--accent); box-shadow: var(--shadow); }
+.features .card h3 { font-size: 14px; font-weight: 700; margin-bottom: 6px; }
+.features .card p { font-size: 13px; color: var(--fg2); line-height: 1.5; }
+
+/* module grid */
+.mod-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; margin: 24px 0; }
+.mod-card { padding: 16px; border: 1px solid var(--border); border-radius: 8px; cursor: pointer;
+    transition: 0.15s; text-decoration: none !important; }
+.mod-card:hover { border-color: var(--accent); background: var(--hover); box-shadow: var(--shadow); }
+.mod-card h3 { font-size: 15px; font-weight: 700; color: var(--fg); }
+.mod-card p { font-size: 12px; color: var(--fg2); margin-top: 4px; }
+.mod-card .n { display: inline-block; padding: 1px 8px; border-radius: 10px; font-size: 11px;
+    background: var(--tag); color: var(--accent); margin-top: 6px; }
+
+/* page titles */
+.page h1 { font-size: 28px; font-weight: 700; margin-bottom: 4px; }
+.page h1 .badge { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 11px;
+    background: var(--tag); color: var(--accent); margin-left: 8px; vertical-align: middle; }
+.page h2 { font-size: 20px; font-weight: 700; margin: 36px 0 12px; padding-bottom: 8px;
+    border-bottom: 1px solid var(--border); }
+.page h3 { font-size: 16px; font-weight: 600; margin: 20px 0 8px; }
+.page p, .page li { font-size: 14px; color: var(--fg2); }
+.page p { margin: 8px 0; }
+
+/* fn tables */
+.fn-table { width: 100%; border-collapse: collapse; }
+.fn-table th { text-align: left; padding: 8px 10px; background: var(--code-bg);
+    font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;
+    color: var(--fg2); border-bottom: 2px solid var(--border); }
+.fn-table td { padding: 6px 10px; font-size: 13px; border-bottom: 1px solid var(--border); }
+.fn-table tr:hover td { background: var(--hover); }
+.fn-table .fn-name { font-weight: 600; font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', 'JetBrains Mono', monospace;
+    color: var(--accent); white-space: nowrap; cursor: pointer; }
+.fn-table .fn-name:hover { text-decoration: underline; }
+.fn-table .fn-sig { font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
+    font-size: 12px; color: var(--fg); }
+.fn-table .fn-desc { font-size: 12px; color: var(--fg2); max-width: 280px; }
+
+/* detail */
+code, pre, .sig { font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', 'JetBrains Mono', monospace; }
+code { font-size: 13px; background: var(--code-bg); padding: 1px 5px; border-radius: 3px; }
+pre { background: var(--code-bg); padding: 16px 20px; border-radius: 8px; overflow-x: auto;
+    margin: 12px 0; line-height: 1.5; border: 1px solid var(--border); }
+pre code { background: none; padding: 0; border: none; }
+.sig { background: var(--code-bg); padding: 16px 20px; border-radius: 8px; margin: 14px 0;
+    border: 1px solid var(--border); font-size: 14px; line-height: 1.7; overflow-x: auto; }
+.sig code { display: block; white-space: pre; }
+.sig .kw { color: var(--accent); font-weight: 600; }
+.sig .ty { color: var(--type); }
+.sig .fn { color: #059669; }
+.param-tbl { width: 100%; border-collapse: collapse; margin: 14px 0; }
+.param-tbl th { text-align: left; padding: 6px 10px; background: var(--code-bg); font-size: 12px;
+    font-weight: 600; text-transform: uppercase; letter-spacing: 0.3px; color: var(--fg2); }
+.param-tbl td { padding: 6px 10px; border-bottom: 1px solid var(--border); font-size: 13px; }
+.param-tbl .pn { color: var(--param); font-family: monospace; font-weight: 600; }
+.param-tbl .pt { color: var(--type); font-family: monospace; font-size: 12px; }
+.note { background: var(--warn); border-left: 3px solid #f59e0b; padding: 10px 14px;
+    border-radius: 0 6px 6px 0; margin: 12px 0; font-size: 13px; color: #92400e; }
+.dark .note { color: #fbbf24; }
+
+/* quick start code */
+.qs { background: var(--code-bg); border: 1px solid var(--border); border-radius: 10px; overflow: hidden;
+    margin: 16px 0; }
+.qs-header { display: flex; justify-content: space-between; align-items: center;
+    padding: 8px 14px; background: var(--hover); border-bottom: 1px solid var(--border); }
+.qs-header span { font-size: 12px; color: var(--fg2); font-weight: 500; }
+.qs-header button { padding: 2px 10px; border: 1px solid var(--border); border-radius: 4px;
+    background: var(--bg); color: var(--fg); font-size: 11px; cursor: pointer; }
+.qs pre { margin: 0; border: none; border-radius: 0; }
+
+/* back link */
+.back { display: inline-block; padding: 4px 10px; border-radius: 4px; font-size: 13px;
+    color: var(--fg2); margin-bottom: 16px; }
+.back:hover { background: var(--hover); color: var(--accent); text-decoration: none; }
+
+/* install */
+.install-step { display: flex; gap: 8px; margin: 8px 0; align-items: center; }
+.install-step .num { width: 24px; height: 24px; border-radius: 50%; background: var(--accent);
+    color: #fff; font-size: 12px; font-weight: 700; display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0; }
+
+/* responsive */
+@media (max-width: 1024px) {
+    .features { grid-template-columns: 1fr 1fr; }
+    .mod-grid { grid-template-columns: 1fr; }
+}
+@media (max-width: 768px) {
+    #sidebar { position: relative; width: 100%; height: auto; flex-shrink:0; }
+    #main { margin-left: 0; }
+    #sidebar .sidebar-nav { max-height: 40vh; }
+    .hero, .page { padding: 32px 24px; }
+    .hero h1 { font-size: 30px; }
+    .features { grid-template-columns: 1fr; }
+}
+.hidden { display: none !important; }
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════ SIDEBAR ══════════════════════ -->
+<aside id="sidebar">
+<div class="sidebar-header">
+    <div class="logo">libnpc<span>++</span></div>
+    <div class="ver">v1.0.0 · 21 modules</div>
+    <div id="lang-toggle">
+        <button class="on" onclick="setLang('en')">EN</button>
+        <button onclick="setLang('zh')">中</button>
+    </div>
+</div>
+<div id="search-wrap">
+    <input type="text" id="search-box" placeholder="Search functions..." oninput="doSearch(this.value)" autocomplete="off">
+    <div id="search-results"></div>
+</div>
+<nav class="sidebar-nav">
+    <details open>
+        <summary data-i18n="overview">Overview</summary>
+        <a href="#page:home" onclick="navigate('#page:home');return false" class="here" data-i18n="home">Home</a>
+        <a href="#page:install" onclick="navigate('#page:install');return false" data-i18n="install">Installation</a>
+        <a href="#page:quickstart" onclick="navigate('#page:quickstart');return false" data-i18n="quick">Quick Start</a>
+        <a href="#page:dtype" onclick="navigate('#page:dtype');return false" data-i18n="dtype">Data Types</a>
+        <a href="#page:array" onclick="navigate('#page:array');return false" data-i18n="page_array">Array Class</a>
+    </details>
+    <details open>
+        <summary data-i18n="modules">API Reference</summary>
+        <a href="#mod:creation" onclick="navigate('#mod:creation');return false" data-i18n="mod_creation">Array Creation</a>
+        <a href="#mod:arithmetic" onclick="navigate('#mod:arithmetic');return false" data-i18n="mod_arithmetic">Arithmetic Operators</a>
+        <a href="#mod:math" onclick="navigate('#mod:math');return false" data-i18n="mod_math">Math Functions</a>
+        <a href="#mod:comparison" onclick="navigate('#mod:comparison');return false" data-i18n="mod_comparison">Comparison &amp; Logic</a>
+        <a href="#mod:stats" onclick="navigate('#mod:stats');return false" data-i18n="mod_stats">Statistics</a>
+        <a href="#mod:nanstats" onclick="navigate('#mod:nanstats');return false" data-i18n="mod_nanstats">NaN Statistics</a>
+        <a href="#mod:linalg" onclick="navigate('#mod:linalg');return false" data-i18n="mod_linalg">Linear Algebra</a>
+        <a href="#mod:fft" onclick="navigate('#mod:fft');return false" data-i18n="mod_fft">FFT</a>
+        <a href="#mod:random" onclick="navigate('#mod:random');return false" data-i18n="mod_random">Random</a>
+        <a href="#mod:polynomial" onclick="navigate('#mod:polynomial');return false" data-i18n="mod_polynomial">Polynomials</a>
+        <a href="#mod:shape" onclick="navigate('#mod:shape');return false" data-i18n="mod_shape">Shape &amp; Manipulation</a>
+        <a href="#mod:search" onclick="navigate('#mod:search');return false" data-i18n="mod_search">Search &amp; Set</a>
+        <a href="#mod:interp" onclick="navigate('#mod:interp');return false" data-i18n="mod_interp">Interpolation</a>
+        <a href="#mod:sorting" onclick="navigate('#mod:sorting');return false" data-i18n="mod_sorting">Sorting</a>
+        <a href="#mod:io" onclick="navigate('#mod:io');return false" data-i18n="mod_io">I/O</a>
+        <a href="#mod:window" onclick="navigate('#mod:window');return false" data-i18n="mod_window">Window Functions</a>
+        <a href="#mod:histogram" onclick="navigate('#mod:histogram');return false" data-i18n="mod_histogram">Histograms</a>
+        <a href="#mod:mutation" onclick="navigate('#mod:mutation');return false" data-i18n="mod_mutation">In-place Mutation</a>
+        <a href="#mod:misc" onclick="navigate('#mod:misc');return false" data-i18n="mod_misc">Miscellaneous</a>
+    </details>
+</nav>
+</aside>
+
+<!-- ═══════════════════════════ MAIN ═════════════════════════ -->
+<main id="main">
+
+<!-- ── HOME ─────────────────────────────────────────────── -->
+<section id="page:home" class="hero on">
+<h1 data-i18n="home_title">A <span>NumPy-compatible</span> numerical computing library<br>for modern C++</h1>
+<p class="lead"><span data-i18n="home_lead">libnpc++ is a C++17 RAII wrapper around libnpc — ~335 functions across 21 modules. Zero Python dependency. Header-only. MIT licensed.</span></p>
+<div class="badges">
+    <span>C++17</span><span>Header-only</span><span>CMake</span><span>macOS &amp; Linux</span>
+</div>
+<div class="cta">
+    <a href="#page:quickstart" onclick="navigate('#page:quickstart');return false">Get Started →</a>
+    <a class="gh" href="https://github.com/xiayang558/libnpcpp" target="_blank">GitHub</a>
+</div>
+<div class="features">
+    <div class="card">
+        <h3><span data-i18n="feat1_title">RAII Ownership</span></h3>
+        <p><span data-i18n="feat1_desc">Automatic memory management — arrays free themselves. No manual <code>free_array()</code> calls needed.</span></p>
+    </div>
+    <div class="card">
+        <h3><span data-i18n="feat2_title">Operator Overloading</span></h3>
+        <p><span data-i18n="feat2_desc"><code>a + b</code>, <code>a * 2.0</code>, <code>-a</code>, <code>2.0 / a</code>, <code>a += b</code> — all element-wise with broadcasting.</span></p>
+    </div>
+    <div class="card">
+        <h3><span data-i18n="feat3_title">Natural Indexing</span></h3>
+        <p><span data-i18n="feat3_desc"><code>a(0, 1)</code>, <code>a[3]</code>, <code>a.at&lt;double&gt;({i,j})</code>, <code>a.scalar&lt;T&gt;()</code> — typed access everywhere.</span></p>
+    </div>
+    <div class="card">
+        <h3><span data-i18n="feat5_title">Stream Output</span></h3>
+        <p><span data-i18n="feat5_desc"><code>std::cout &lt;&lt; a</code> prints metadata. <code>a.print()</code> dumps values.</span></p>
+    </div>
+    <div class="card">
+        <h3><span data-i18n="feat4_title">Move Semantics</span></h3>
+        <p><span data-i18n="feat4_desc">Efficient ownership transfer. Copy is deep; move is zero-cost.</span></p>
+    </div>
+    <div class="card">
+        <h3>Linear Algebra</h3>
+        <p><span data-i18n="feat6_desc">SVD, QR, LU, Cholesky, Eig, matrix inverse — all with RAII result structs.</span></p>
+    </div>
+</div>
+<h2><span data-i18n="home_modules">Module Overview</span></h2>
+<div class="mod-grid" id="mod-grid"></div>
+</section>
+
+<!-- ── INSTALL ──────────────────────────────────────────── -->
+<section id="page:install" class="page">
+<a class="back" href="#page:home">&larr; Home</a>
+<h1 data-i18n="page_install">Installation</h1>
+<h2><span data-i18n="page_prereq">Prerequisites</span></h2>
+<p><span data-i18n="page_prereq_text"><strong>C++17 compiler</strong> — GCC 8+, Clang 7+, Apple Clang 12+<br>
+<strong>CMake 3.16+</strong><br>
+<strong>libzip</strong> (NPZ I/O only, optional for core functionality):</span></p>
+<div class="install-step"><span class="num">1</span><code>brew install libzip</code> &nbsp; (macOS)</div>
+<div class="install-step"><span class="num">1</span><code>apt install libzip-dev</code> &nbsp; (Linux)</div>
+
+<h2><span data-i18n="page_clone">Clone &amp; Build</span></h2>
+<div class="qs"><div class="qs-header"><span>Terminal</span><button onclick="copyCode(this)">Copy</button></div>
+<pre><code>git clone --recurse-submodules https://github.com/xiayang558/libnpcpp.git
+cd libnpcpp &amp;&amp; mkdir build &amp;&amp; cd build
+cmake .. -DCMAKE_BUILD_TYPE=Release
+make -j$(nproc)</code></pre></div>
+
+<h2><span data-i18n="page_tests">Run Tests</span></h2>
+<div class="qs"><div class="qs-header"><span>Terminal</span><button onclick="copyCode(this)">Copy</button></div>
+<pre><code>cd build &amp;&amp; ctest --output-on-failure</code></pre></div>
+
+<h2><span data-i18n="page_cmake">Use in Your CMake Project</span></h2>
+<div class="qs"><div class="qs-header"><span>CMakeLists.txt</span><button onclick="copyCode(this)">Copy</button></div>
+<pre><code>add_subdirectory(path/to/libnpcpp)
+target_link_libraries(my_app PRIVATE libnpc::npcpp)</code></pre></div>
+</section>
+
+<!-- ── QUICK START ─────────────────────────────────────── -->
+<section id="page:quickstart" class="page">
+<a class="back" href="#page:home">&larr; Home</a>
+<h1 data-i18n="page_qs">Quick Start</h1>
+<p><span data-i18n="page_qs_desc">A 30-line tour of the library:</span></p>
+<div class="qs"><div class="qs-header"><span>main.cpp</span><button onclick="copyCode(this)">Copy</button></div>
+<pre><code>#include &lt;npc/npc.hpp&gt;
+
+int main() {
+    // ── Create arrays ─────────────────────────
+    auto a = npc::ones({3, 3});           // 3×3 of 1.0
+    auto b = npc::full({3, 3}, 2.0);      // 3×3 of 2.0
+    auto r = npc::arange(0.0, 10.0, 2.0); // [0,2,4,6,8]
+    auto I = npc::eye(3);                 // identity
+
+    // ── Operators ─────────────────────────────
+    auto c = a + b;        // element-wise add
+    auto d = c * 3.0;      // scalar multiply
+    auto e = 2.0 / a;      // scalar division
+    e += 1.0;              // compound assignment
+
+    // ── Indexing ──────────────────────────────
+    std::cout &lt;&lt; a(0, 1) &lt;&lt; std::endl;  // → 1.0
+    a[0] = 99.0;           // bracket access (1-D)
+    double v = a.at&lt;double&gt;({1, 2});
+
+    // ── Math &amp; stats ─────────────────────────
+    auto s = npc::sqrt(b);
+    auto m = npc::mean(r);
+    auto t = npc::sum(a, 0);  // along axis 0
+
+    // ── Linear algebra ────────────────────────
+    auto svd_r = npc::svd(I);  // → {U, s, Vt}
+    auto inv = npc::inv(a);
+
+    // ── Cleanup ───────────────────────────────
+    return 0;  // RAII: all arrays freed automatically
+}</code></pre></div>
+</section>
+
+<!-- ── DATA TYPES ──────────────────────────────────────── -->
+<section id="page:dtype" class="page">
+<a class="back" href="#page:home">&larr; Home</a>
+<h1 data-i18n="page_dtype">Data Types</h1>
+<p><span data-i18n="page_dtype_desc">libnpc++ maps each libnpc C <code>DataType</code> to a scoped C++ <code>DType</code> enum.</span></p>
+<table class="param-tbl">
+<tr><th>DType</th><th>C++ Type</th><th>Size</th></tr>
+<tr><td class="pn">Bool</td><td class="pt">bool</td><td>1</td></tr>
+<tr><td class="pn">Int8</td><td class="pt">int8_t</td><td>1</td></tr>
+<tr><td class="pn">Int16</td><td class="pt">int16_t</td><td>2</td></tr>
+<tr><td class="pn">Int32</td><td class="pt">int32_t</td><td>4</td></tr>
+<tr><td class="pn">Int64</td><td class="pt">int64_t</td><td>8</td></tr>
+<tr><td class="pn">UInt8</td><td class="pt">uint8_t</td><td>1</td></tr>
+<tr><td class="pn">UInt16</td><td class="pt">uint16_t</td><td>2</td></tr>
+<tr><td class="pn">UInt32</td><td class="pt">uint32_t</td><td>4</td></tr>
+<tr><td class="pn">UInt64</td><td class="pt">uint64_t</td><td>8</td></tr>
+<tr><td class="pn">Float32</td><td class="pt">float</td><td>4</td></tr>
+<tr><td class="pn">Float64</td><td class="pt">double</td><td>8 (default)</td></tr>
+<tr><td class="pn">Float128</td><td class="pt">long double</td><td>16</td></tr>
+<tr><td class="pn">Complex64</td><td class="pt">std::complex&lt;float&gt;</td><td>8</td></tr>
+<tr><td class="pn">Complex128</td><td class="pt">std::complex&lt;double&gt;</td><td>16</td></tr>
+<tr><td class="pn">Complex256</td><td class="pt">std::complex&lt;long double&gt;</td><td>32</td></tr>
+<tr><td class="pn">DateTime64</td><td class="pt">npc::DateTime64</td><td>8</td></tr>
+<tr><td class="pn">String</td><td class="pt">—</td><td>varies</td></tr>
+</table>
+<h2><span data-i18n="page_dtype_ct">Compile-time Mapping</span></h2>
+<div class="sig"><code><span class="kw">static_assert</span>(npc::dtype_of&lt;<span class="kw">double</span>&gt;::value == npc::DType::Float64);
+<span class="kw">static_assert</span>(npc::dtype_of&lt;<span class="kw">int32_t</span>&gt;::value == npc::DType::Int32);
+<span class="kw">static_assert</span>(npc::dtype_of&lt;std::complex&lt;<span class="kw">float</span>&gt;&gt;::value == npc::DType::Complex64);</code></div>
+</section>
+
+<!-- ── ARRAY CLASS ───────────────────────────────────────── -->
+<section id="page:array" class="page">
+<a class="back" href="#page:home">← Home</a>
+<h1 data-i18n="page_array">Array Class</h1>
+<p data-i18n="page_array_desc">The <code>npc::Array</code> class is the central type of libnpc++. It wraps a raw libnpc <code>::Array*</code> with RAII semantics via <code>std::unique_ptr</code>, providing automatic memory management, operator overloading, typed element access, and C++17 copy/move semantics.</p>
+
+<h2>Constructors</h2>
+<table class="param-tbl">
+<tr><th>Constructor</th><th>Description</th></tr>
+<tr><td class="pn">Array()</td><td>Default: creates a null array wrapping <code>nullptr</code>. Use <code>is_null()</code> or <code>operator bool()</code> to test.</td></tr>
+<tr><td class="pn">Array(::Array* ptr, bool owned=true)</td><td>Takes ownership of a raw C <code>::Array*</code>. If <code>owned=false</code>, deep-copies instead.</td></tr>
+<tr><td class="pn">Array(const Array& other)</td><td>Deep copy constructor. The new array is completely independent of the original.</td></tr>
+<tr><td class="pn">Array(Array&& other) noexcept</td><td>Move constructor. Transfers ownership — the source becomes a null array. Zero-cost.</td></tr>
+</table>
+
+<h2>Assignment</h2>
+<table class="param-tbl">
+<tr><th>Operator</th><th>Description</th></tr>
+<tr><td class="pn">Array& operator=(const Array&)</td><td>Deep copy assignment. Source unchanged, target becomes independent copy.</td></tr>
+<tr><td class="pn">Array& operator=(Array&&) noexcept</td><td>Move assignment. Transfers ownership from source to target.</td></tr>
+</table>
+
+<h2>Accessors</h2>
+<table class="param-tbl">
+<tr><th>Method</th><th>Return</th><th>Description</th></tr>
+<tr><td class="pn">ndim()</td><td class="pt">int</td><td>Number of dimensions. 0 for scalar, 1 for vector, 2 for matrix, etc. Returns 0 for null arrays.</td></tr>
+<tr><td class="pn">size()</td><td class="pt">int</td><td>Total number of elements (product of all shape dimensions).</td></tr>
+<tr><td class="pn">shape()</td><td class="pt">const int*</td><td>Pointer to shape array of length ndim(). Returns nullptr for 0-d or null arrays.</td></tr>
+<tr><td class="pn">shape_vec()</td><td class="pt">vector&lt;int&gt;</td><td>Shape as a convenient <code>std::vector&lt;int&gt;</code>.</td></tr>
+<tr><td class="pn">strides()</td><td class="pt">const int*</td><td>Pointer to strides array. May be nullptr.</td></tr>
+<tr><td class="pn">dtype()</td><td class="pt">DType</td><td>Element data type as a scoped <code>npc::DType</code> enum.</td></tr>
+<tr><td class="pn">is_view()</td><td class="pt">bool</td><td>True if this array is a view sharing another array's data buffer.</td></tr>
+<tr><td class="pn">is_null()</td><td class="pt">bool</td><td>True if the array wraps no data (nullptr).</td></tr>
+<tr><td class="pn">operator bool()</td><td class="pt">bool</td><td>Explicit conversion: true if non-null. Enables <code>if (arr) { ... }</code>.</td></tr>
+</table>
+
+<h2>Element Access</h2>
+<h3>Typed Access: at&lt;T&gt;({i, j, ...})</h3>
+<p>Returns a reference (T&amp;) to the element at given multi-dimensional indices. The number of indices must match ndim() (assert-checked).</p>
+<div class="sig"><code><span class="kw">double</span>&amp; v = a.at&lt;<span class="kw">double</span>&gt;({<span class="kw">1</span>, <span class="kw">2</span>});     <span class="comment">// 2-D: row 1, col 2</span>
+<span class="kw">int64_t</span>&amp; iv = a.at&lt;<span class="kw">int64_t</span>&gt;({<span class="kw">0</span>});       <span class="comment">// typed Int64 access</span></code></div>
+
+<h3>Variadic operator()(i, j, k)</h3>
+<p>Variadic-template multi-dimensional indexing returning double. Accepts any number of int indices.</p>
+<div class="sig"><code><span class="kw">double</span> v = a(<span class="kw">0</span>, <span class="kw">1</span>);             <span class="comment">// 2-D access</span>
+<span class="kw">double</span> w = a(<span class="kw">2</span>);                 <span class="comment">// 1-D access</span></code></div>
+
+<h3>Bracket operator[](int)</h3>
+<p>Single-index access for 1-D arrays. Returns double&amp; reference. Requires ndim()==1.</p>
+<div class="sig"><code><span class="kw">double</span> v = a[<span class="kw">3</span>];                <span class="comment">// read</span>
+a[<span class="kw">0</span>] = <span class="kw">99.0</span>;                   <span class="comment">// write</span></code></div>
+
+<h3>scalar&lt;T&gt;()</h3>
+<p>Returns the first element as type T. Ideal for extracting 0-d scalar results from aggregations.</p>
+<div class="sig"><code><span class="kw">auto</span> total = npc::sum(data);
+<span class="kw">double</span> v = total.scalar&lt;<span class="kw">double</span>&gt;(); <span class="comment">// extract scalar</span></code></div>
+
+<h2>Data Pointers &amp; Iterators</h2>
+<table class="param-tbl">
+<tr><th>Method</th><th>Return</th><th>Description</th></tr>
+<tr><td class="pn">data&lt;T&gt;()</td><td class="pt">T*</td><td>Mutable typed pointer to raw data buffer.</td></tr>
+<tr><td class="pn">data&lt;T&gt;() const</td><td class="pt">const T*</td><td>Const typed pointer to raw data buffer.</td></tr>
+<tr><td class="pn">begin&lt;T&gt;()</td><td class="pt">T*</td><td>Typed iterator start — supports pointer-based loops.</td></tr>
+<tr><td class="pn">end&lt;T&gt;()</td><td class="pt">T*</td><td>Typed iterator end.</td></tr>
+</table>
+<div class="sig"><code><span class="kw">double</span> sum = <span class="kw">0.0</span>;
+<span class="kw">for</span> (<span class="kw">const</span> <span class="kw">double</span>* p = a.begin&lt;<span class="kw">double</span>&gt;(); p != a.end&lt;<span class="kw">double</span>&gt;(); ++p)
+    sum += *p;</code></div>
+
+<h2>Printing &amp; I/O</h2>
+<table class="param-tbl">
+<tr><th>Method</th><th>Description</th></tr>
+<tr><td class="pn">print()</td><td>Print array contents to stdout (delegates to libnpc's print_array).</td></tr>
+<tr><td class="pn">info()</td><td>Print array metadata: dtype, ndim, shape, strides.</td></tr>
+<tr><td class="pn">operator&lt;&lt;(ostream&amp;, const Array&amp;)</td><td>Stream insertion: <code>Array(dtype=5, ndim=2, shape=[3,4])</code>.</td></tr>
+</table>
+
+<h2>Raw C Pointer (Escape Hatch)</h2>
+<table class="param-tbl">
+<tr><th>Method</th><th>Description</th></tr>
+<tr><td class="pn">get()</td><td>Returns the underlying <code>::Array*</code> pointer without releasing ownership.</td></tr>
+<tr><td class="pn">release()</td><td>Releases ownership. Caller must manually <code>free_array()</code>.</td></tr>
+<tr><td class="pn">reset(::Array* ptr=nullptr)</td><td>Replace the internal pointer, freeing the old one.</td></tr>
+</table>
+
+<h2>Ownership Semantics</h2>
+<table class="param-tbl">
+<tr><th>Operation</th><th>Behavior</th><th>Cost</th></tr>
+<tr><td>Copy construct</td><td>Deep copy — allocates new buffer, copies all elements</td><td>O(n)</td></tr>
+<tr><td>Copy assign</td><td>Deep copy — frees old data, allocates new, copies elements</td><td>O(n)</td></tr>
+<tr><td>Move construct</td><td>Transfers internal pointer — source becomes null</td><td>O(1)</td></tr>
+<tr><td>Move assign</td><td>Transfers internal pointer — source becomes null</td><td>O(1)</td></tr>
+<tr><td>Destructor</td><td>Calls free_array() on the underlying C array</td><td>O(1)</td></tr>
+</table>
+
+<div class="note">
+<strong>RAII guarantee:</strong> When an <code>npc::Array</code> goes out of scope, its destructor automatically frees the underlying libnpc C array. You never need to call <code>free_array()</code> manually. This is the fundamental safety improvement over the raw C API.
+</div>
+</section>
+
+<!-- ═══════════════════════════ MODULE PAGES ═════════════════ -->
+<div id="mod-pages"></div>
+
+<!-- ── FUNCTION DETAIL ──────────────────────────────────── -->
+<section id="fn-detail" class="page hidden"></section>
+
+</main>
+
+<script src="fns.js"></script>
+<script src="i18n.js"></script>
+<script>
+// ── i18n helpers ──────────────────────────────────────────────
+function T(key) { return (i18n[key] && i18n[key][lang]) ? i18n[key][lang] : (i18n[key] ? i18n[key]['en'] : key); }
+function TF(key, field, fallback) {
+    if (lang !== 'zh') return fallback || '';
+    return (i18n.fn && i18n.fn[key] && i18n.fn[key][field]) ? i18n.fn[key][field] : (fallback || '');
+}
+
+// ── Module database (English base; i18n overrides at render time) ─
+const MODULES = {
+    creation:   {key:'creation',   desc:'Create and initialize arrays — the building blocks of all numerical computation. Includes factory functions for constant arrays (zeros, ones, full), range generators (arange, linspace, logspace), special matrices (eye, identity), and constructors from C++ initializer lists.'},
+    arithmetic: {key:'arithmetic', desc:'Element-wise arithmetic operators with full Array↔Array and Array↔scalar support. All operators return new arrays with automatic memory management. Compound assignment (+=, -=, *=, /=) modifies arrays in place.'},
+    math:       {key:'math',       desc:'Element-wise mathematical functions covering basic math (abs, sqrt, exp, log), trigonometry and hyperbolic functions, rounding, power/exponentiation, special functions, floating-point utilities, and GCD/LCM.'},
+    comparison: {key:'comparison', desc:'Element-wise comparison and logical operations returning boolean arrays. Includes exact/approximate equality (isclose with tolerance), relational operators, and both logical and bitwise operations.'},
+    stats:      {key:'stats',      desc:'Aggregation and statistics — compute summary statistics over all elements or along specific axes. Includes moments (mean, stddev, var), order statistics (median, percentile), cumulative operations, correlations, and hypothesis testing (all, any).'},
+    nanstats:   {key:'nanstats',   desc:'NaN-aware variants of statistics that safely ignore missing values. Includes nanmax, nanmin, nanmean, nanmedian, nanstd, nanvar, nansum, nanprod, plus NaN detection and replacement utilities.'},
+    linalg:     {key:'linalg',     desc:'Linear algebra — matrix products, decompositions, inverses, and properties. SVD, QR, LU, Cholesky, Eigenvalue decompositions with RAII result structs. Matrix inverse, pseudo-inverse, determinant, trace, dot, cross, outer, Kronecker, tensor products.'},
+    fft:        {key:'fft',        desc:'Fast Fourier Transform — 1-D, 2-D, and N-D complex and real-valued FFTs with Hermitian variants and inverse transforms. Frequency utilities (fftfreq, rfftfreq) and spectrum centering (fftshift, ifftshift).'},
+    random:     {key:'random',     desc:'Random number generation using xoshiro256** PRNG. Supports uniform, normal, exponential, gamma, beta, chi-square, Student-t, F, and many continuous/discrete distributions. Includes multivariate sampling, permutation, shuffle, and weighted choice.'},
+    polynomial: {key:'polynomial', desc:'Polynomial algebra — construct polynomials from roots, find roots from coefficients, least-squares fitting, evaluation, and arithmetic (add, subtract, multiply, divide with remainder, differentiate, integrate).'},
+    shape:      {key:'shape',      desc:'Shape manipulation — reshape, transpose, flatten, stack, split, concatenate arrays. Broadcasting, axis movement, tiling, padding, diagonal extraction, fancy indexing helpers, and meshgrid generation.'},
+    search:     {key:'search',     desc:'Set operations and search — unique elements with optional index/count tracking, intersections and differences, binary search for insertion points, bin digitization, and non-zero element location.'},
+    interp:     {key:'interp',     desc:'Interpolation and finite differences — 1-D linear interpolation with extrapolation, n-th order differences along axes, adjacent element differences, and N-D gradient computation.'},
+    sorting:    {key:'sorting',    desc:'Sort along first axis, find sorting indices, partial sort by k-th element, evaluate piecewise-defined functions, and perform phase unwrapping.'},
+    io:         {key:'io',         desc:'File I/O — read/write arrays in text format (readtxt, savetxt, genfromtxt) and efficient binary formats (.npy and .npz). Includes std::string filename overloads.'},
+    window:     {key:'window',     desc:'Window functions for signal processing and spectral analysis — Bartlett, Blackman, Hamming, Hanning, and Kaiser windows. Each returns a 1-D array of specified length.'},
+    histogram:  {key:'histogram',  desc:'Histogram computation — 1-D, 2-D, and multi-dimensional binning with automatic or manual range specification. Supports density normalization. Returns RAII result structs with counts and edges.'},
+    mutation:   {key:'mutation',   desc:'In-place array mutation — place values at mask positions, put values at specified indices, apply masks, and fill diagonals. All functions modify the input array directly.'},
+    misc:       {key:'misc',       desc:'Miscellaneous — convolution, log/geometric space generation, float decomposition (frexp, modf), zero trimming, raw buffer construction, index-function evaluation, array insertion/deletion, and grid index generation.'},
+};
+
+// ── State ─────────────────────────────────────────────────────
+let lang = 'en', currentFn = null, currentMod = null, currentPage = 'home';
+
+// ── Language switch ───────────────────────────────────────────
+function setLang(l) {
+    lang = l;
+    document.querySelectorAll('#lang-toggle button').forEach((b, i) =>
+        b.classList.toggle('on', (i === 0 && l === 'en') || (i === 1 && l === 'zh')));
+    // Update [data-i18n] text in sidebar + static pages
+    document.querySelectorAll('[data-i18n]').forEach(el => {
+        const v = i18n[el.dataset.i18n];
+        if (v && v[l]) el.innerHTML = v[l];
+    });
+    // Update search placeholder
+    const sb = document.getElementById('search-box');
+    if (sb) sb.placeholder = T('search_ph');
+    // Re-render current view
+    if (currentFn) showFn(currentFn.key);
+    else if (currentMod) showModule(currentMod);
+    else if (currentPage === 'home') { showHome(); }
+    else if (currentPage) { showPage(currentPage); }
+}
+
+// ── Navigation ────────────────────────────────────────────────
+function navigate(hash) {
+    if (!hash || hash === '#page:home') return showHome();
+    if (hash.startsWith('#page:')) return showPage(hash.substring(6));
+    if (hash.startsWith('#mod:'))  return showModule(hash.substring(5));
+    if (hash.startsWith('#fn:'))   return showFn(hash.substring(4));
+    showHome();
+}
+
+// ── Home ──────────────────────────────────────────────────────
+function showHome() {
+    hideAll(); currentPage = 'home';
+    const el = document.getElementById('page:home');
+    // Rebuild home content from i18n (hero, features, module grid)
+    el.querySelector('h1').innerHTML = T('home_title');
+    el.querySelector('.lead').innerHTML = T('home_lead');
+    const badges = el.querySelector('.badges');
+    badges.innerHTML = `<span>${T('home_badge_cpp')}</span><span>${T('home_badge_ho')}</span><span>${T('home_badge_cmake')}</span><span>${T('home_badge_os')}</span>`;
+    el.querySelector('.cta a').textContent = T('get_started');
+    // Feature cards
+    const cards = el.querySelectorAll('.card');
+    const fdata = [
+        [T('feat1_title'), T('feat1_desc')], [T('feat2_title'), T('feat2_desc')],
+        [T('feat3_title'), T('feat3_desc')], [T('feat4_title'), T('feat4_desc')],
+        [T('feat5_title'), T('feat5_desc')], [T('feat6_title'), T('feat6_desc')],
+    ];
+    cards.forEach((c, i) => { if (i < fdata.length) { c.querySelector('h3').textContent = fdata[i][0]; c.querySelector('p').innerHTML = fdata[i][1]; } });
+    el.querySelector('h2').textContent = T('home_modules');
+    el.classList.add('on');
+    if (window.location.hash !== '#page:home') _busy = true; window.location.hash = '#page:home'; setTimeout(() => _busy = false, 50);
+    updateSidebar('page:home'); buildModGrid(); window.scrollTo(0, 0);
+}
+
+function buildModGrid() {
+    const grid = document.getElementById('mod-grid');
+    if (!grid) return;
+    grid.innerHTML = Object.entries(MODULES).map(([k, v]) => {
+        const count = FNS.filter(f => f.m === k).length;
+        const name = T('mod_' + k);
+        return `<a class="mod-card" href="#mod:${k}" onclick="navigate('#mod:${k}');event.preventDefault()">
+            <h3>${name}</h3><p>${T('mod_desc_' + k)}</p><span class="n">${count} ${T('func_count')}</span></a>`;
+    }).join('');
+}
+
+// ── Static pages ──────────────────────────────────────────────
+function showArray() {
+    const h = '#page:array';
+    if (window.location.hash !== h) { _busy = true; window.location.hash = h; setTimeout(() => _busy = false, 50); }
+    updateSidebar(h);
+
+    const el = document.getElementById('page:array');
+    if (!el) return;
+    el.innerHTML = `<a class="back" href="#page:home">&larr; Home</a>
+<h1>${T('page_array')}</h1>
+<p>${T('page_array_desc')}</p>
+<h2>${T('arr_constructors')}</h2>
+<table class="param-tbl">
+<tr><th>${T('arr_constructor')}</th><th>${T('arr_desc')}</th></tr>
+<tr><td class="pn">Array()</td><td>${T('arr_ctor_default')}</td></tr>
+<tr><td class="pn">Array(::Array* ptr, bool owned=true)</td><td>${T('arr_ctor_ptr')}</td></tr>
+<tr><td class="pn">Array(const Array& other)</td><td>${T('arr_ctor_copy')}</td></tr>
+<tr><td class="pn">Array(Array&& other) noexcept</td><td>${T('arr_ctor_move')}</td></tr>
+</table>
+<h2>${T('arr_assignment')}</h2>
+<table class="param-tbl">
+<tr><th>${T('arr_operator')}</th><th>${T('arr_desc')}</th></tr>
+<tr><td class="pn">Array& operator=(const Array&)</td><td>${T('arr_assign_copy')}</td></tr>
+<tr><td class="pn">Array& operator=(Array&&) noexcept</td><td>${T('arr_assign_move')}</td></tr>
+</table>
+<div class="sig"><code><span class="comment">// Copy assignment — deep copy, original unchanged</span>
+npc::Array b;
+b = a;               <span class="comment">// b is now an independent deep copy of a</span>
+b[<span class="kw">0</span>] = <span class="kw">99.0</span>;          <span class="comment">// modifying b does NOT affect a</span>
+
+<span class="comment">// Move assignment — transfer ownership, zero-cost</span>
+npc::Array c;
+c = std::move(a);    <span class="comment">// c takes ownership, a becomes null</span>
+<span class="kw">if</span> (a) { ... }      <span class="comment">// false — a is empty after move</span></code></div>
+<h2>${T('arr_accessors')}</h2>
+<table class="param-tbl">
+<tr><th>${T('arr_method')}</th><th>${T('arr_return')}</th><th>${T('arr_desc')}</th></tr>
+<tr><td class="pn">ndim()</td><td class="pt">int</td><td>${T('arr_ndim')}</td></tr>
+<tr><td class="pn">size()</td><td class="pt">int</td><td>${T('arr_size')}</td></tr>
+<tr><td class="pn">shape()</td><td class="pt">const int*</td><td>${T('arr_shape')}</td></tr>
+<tr><td class="pn">shape_vec()</td><td class="pt">vector&lt;int&gt;</td><td>${T('arr_shape_vec')}</td></tr>
+<tr><td class="pn">strides()</td><td class="pt">const int*</td><td>${T('arr_strides')}</td></tr>
+<tr><td class="pn">dtype()</td><td class="pt">DType</td><td>${T('arr_dtype')}</td></tr>
+<tr><td class="pn">is_view()</td><td class="pt">bool</td><td>${T('arr_is_view')}</td></tr>
+<tr><td class="pn">is_null()</td><td class="pt">bool</td><td>${T('arr_is_null')}</td></tr>
+<tr><td class="pn">operator bool()</td><td class="pt">bool</td><td>${T('arr_op_bool')}</td></tr>
+</table>
+<div class="sig"><code><span class="kw">auto</span> a = npc::ones({<span class="kw">3</span>, <span class="kw">4</span>});
+<span class="kw">int</span> d = a.ndim();          <span class="comment">// → 2</span>
+<span class="kw">int</span> n = a.size();          <span class="comment">// → 12</span>
+<span class="kw">const</span> <span class="kw">int</span>* sh = a.shape();  <span class="comment">// → [3, 4]</span>
+<span class="kw">auto</span> dt = a.dtype();        <span class="comment">// → npc::DType::Float64</span></code></div>
+<h2>${T('arr_elem_access')}</h2>
+<h3>${T('arr_at')}</h3>
+<p>${T('arr_at_desc')}</p>
+<div class="sig"><code><span class="kw">double</span>&amp; v = a.at&lt;<span class="kw">double</span>&gt;({<span class="kw">1</span>, <span class="kw">2</span>});     <span class="comment">// 2-D: row 1, col 2</span>
+<span class="kw">int64_t</span>&amp; iv = a.at&lt;<span class="kw">int64_t</span>&gt;({<span class="kw">0</span>});       <span class="comment">// typed Int64 access</span></code></div>
+<h3>${T('arr_operator_paren')}</h3>
+<p>${T('arr_operator_paren_desc')}</p>
+<div class="sig"><code><span class="kw">double</span> v = a(<span class="kw">0</span>, <span class="kw">1</span>);             <span class="comment">// 2-D access</span>
+<span class="kw">double</span> w = a(<span class="kw">2</span>);                 <span class="comment">// 1-D access</span></code></div>
+<h3>${T('arr_operator_bracket')}</h3>
+<p>${T('arr_operator_bracket_desc')}</p>
+<div class="sig"><code><span class="kw">double</span> v = a[<span class="kw">3</span>];                <span class="comment">// read</span>
+a[<span class="kw">0</span>] = <span class="kw">99.0</span>;                   <span class="comment">// write</span></code></div>
+<h3>${T('arr_scalar')}</h3>
+<p>${T('arr_scalar_desc')}</p>
+<div class="sig"><code><span class="kw">auto</span> total = npc::sum(data);
+<span class="kw">double</span> v = total.scalar&lt;<span class="kw">double</span>&gt;(); <span class="comment">// extract scalar</span></code></div>
+<h2>${T('arr_data_iters')}</h2>
+<table class="param-tbl">
+<tr><th>${T('arr_method')}</th><th>${T('arr_return')}</th><th>${T('arr_desc')}</th></tr>
+<tr><td class="pn">data&lt;T&gt;()</td><td class="pt">T*</td><td>${T('arr_data_mut')}</td></tr>
+<tr><td class="pn">data&lt;T&gt;() const</td><td class="pt">const T*</td><td>${T('arr_data_const')}</td></tr>
+<tr><td class="pn">begin&lt;T&gt;()</td><td class="pt">T*</td><td>${T('arr_begin')}</td></tr>
+<tr><td class="pn">end&lt;T&gt;()</td><td class="pt">T*</td><td>${T('arr_end')}</td></tr>
+</table>
+<div class="sig"><code><span class="kw">double</span> sum = <span class="kw">0.0</span>;
+<span class="kw">for</span> (<span class="kw">const</span> <span class="kw">double</span>* p = a.begin&lt;<span class="kw">double</span>&gt;(); p != a.end&lt;<span class="kw">double</span>&gt;(); ++p)
+    sum += *p;</code></div>
+<h2>${T('arr_printing')}</h2>
+<table class="param-tbl">
+<tr><th>${T('arr_method')}</th><th>${T('arr_desc')}</th></tr>
+<tr><td class="pn">print()</td><td>${T('arr_print_desc')}</td></tr>
+<tr><td class="pn">info()</td><td>${T('arr_info_desc')}</td></tr>
+<tr><td class="pn">operator&lt;&lt;(ostream&amp;, const Array&amp;)</td><td>${T('arr_ostream_desc')}</td></tr>
+</table>
+<h2>${T('arr_raw_ptr')}</h2>
+	<div class="sig"><code><span class="comment">// Print to stdout</span>
+a.print();                       <span class="comment">// → formatted array contents</span>
+a.info();                        <span class="comment">// → dtype=Float64 ndim=2 shape=[2,2]</span>
+
+<span class="comment">// Stream output</span>
+std::cout &lt;&lt; a &lt;&lt; std::endl;     <span class="comment">// → Array(dtype=5, ndim=2, shape=[2,2])</span>
+<span class="kw">auto</span> s = (std::ostringstream{} &lt;&lt; a).str(); <span class="comment">// write to string</span>
+
+<span class="comment">// File I/O</span>
+npc::save_npy(<span class="str">"data.npy"</span>, a);   <span class="comment">// save as .npy binary</span>
+<span class="kw">auto</span> b = npc::load_npy(<span class="str">"data.npy"</span>); <span class="comment">// load from .npy</span>
+npc::savetxt(<span class="str">"out.csv"</span>, a, <span class="str">"%.6f"</span>, <span class="str">","</span>);   <span class="comment">// save as CSV</span>
+<span class="kw">auto</span> c = npc::readtxt(<span class="str">"out.csv"</span>, <span class="str">","</span>);   <span class="comment">// read CSV</span></code></div>
+<table class="param-tbl">
+<tr><th>${T('arr_method')}</th><th>${T('arr_desc')}</th></tr>
+<tr><td class="pn">get()</td><td>${T('arr_get')}</td></tr>
+<tr><td class="pn">release()</td><td>${T('arr_release')}</td></tr>
+<tr><td class="pn">reset(::Array* ptr=nullptr)</td><td>${T('arr_reset')}</td></tr>
+</table>
+<h2>${T('arr_ownership')}</h2>
+<table class="param-tbl">
+<tr><th>${T('arr_operation')}</th><th>${T('arr_behavior')}</th><th>${T('arr_cost')}</th></tr>
+<tr><td>${T('arr_copy_ctor')}</td><td>${T('arr_copy_ctor_behavior')}</td><td>O(n)</td></tr>
+<tr><td>${T('arr_copy_assign')}</td><td>${T('arr_copy_assign_behavior')}</td><td>O(n)</td></tr>
+<tr><td>${T('arr_move_ctor')}</td><td>${T('arr_move_ctor_behavior')}</td><td>O(1)</td></tr>
+<tr><td>${T('arr_move_assign')}</td><td>${T('arr_move_assign_behavior')}</td><td>O(1)</td></tr>
+<tr><td>${T('arr_destructor')}</td><td>${T('arr_destructor_behavior')}</td><td>O(1)</td></tr>
+</table>
+<div class="note">
+<strong>${T('arr_raii_title')}</strong> ${T('arr_raii_body')}
+</div>
+
+<h2>${T('arr_builtin')}</h2>
+	<p>${T('arr_builtin_desc')}</p>
+
+	<h3>${T('arr_methods_math')}</h3>
+<div class="sig"><code><span class="comment">// Element-wise math</span>
+<span class="kw">auto</span> b = a.abs();           <span class="comment">// absolute value</span>
+<span class="kw">auto</span> b = a.sqrt();          <span class="comment">// square root</span>
+<span class="kw">auto</span> b = a.exp();           <span class="comment">// e^a</span>
+<span class="kw">auto</span> b = a.log();           <span class="comment">// ln(a)</span>
+<span class="kw">auto</span> b = a.log10();         <span class="comment">// log10(a)</span>
+<span class="kw">auto</span> b = a.log2();          <span class="comment">// log2(a)</span>
+<span class="kw">auto</span> b = a.sin();           <span class="comment">// sin(a)</span>
+<span class="kw">auto</span> b = a.cos();           <span class="comment">// cos(a)</span>
+<span class="kw">auto</span> b = a.tan();           <span class="comment">// tan(a)</span>
+<span class="kw">auto</span> b = a.floor();         <span class="comment">// round down</span>
+<span class="kw">auto</span> b = a.ceil();          <span class="comment">// round up</span>
+<span class="kw">auto</span> b = a.rint();          <span class="comment">// round to nearest int</span>
+<span class="kw">auto</span> b = a.trunc();         <span class="comment">// truncate toward zero</span>
+<span class="kw">auto</span> b = a.fix();           <span class="comment">// round toward zero</span>
+<span class="kw">auto</span> b = a.round(<span class="kw">2</span>);       <span class="comment">// round to 2 decimals</span>
+<span class="kw">auto</span> b = a.sign();          <span class="comment">// sign</span>
+<span class="kw">auto</span> b = a.power(exponent); <span class="comment">// a^b</span></code></div>
+
+	<h3>${T('arr_methods_agg')}</h3>
+<div class="sig"><code><span class="comment">// Aggregation</span>
+<span class="kw">auto</span> r = a.sum();           <span class="comment">// sum all elements</span>
+<span class="kw">auto</span> r = a.sum(<span class="kw">0</span>, <span class="kw">true</span>);    <span class="comment">// sum along axis 0, keepdims</span>
+<span class="kw">auto</span> r = a.mean();          <span class="comment">// arithmetic mean</span>
+<span class="kw">auto</span> r = a.min();           <span class="comment">// minimum value</span>
+<span class="kw">auto</span> r = a.max();           <span class="comment">// maximum value</span>
+<span class="kw">auto</span> r = a.prod();          <span class="comment">// product</span>
+<span class="kw">auto</span> r = a.stddev();        <span class="comment">// population stddev</span>
+<span class="kw">auto</span> r = a.var();           <span class="comment">// variance</span>
+<span class="kw">auto</span> r = a.median();        <span class="comment">// median</span>
+<span class="kw">auto</span> r = a.argmax();        <span class="comment">// index of maximum</span>
+<span class="kw">auto</span> r = a.argmin();        <span class="comment">// index of minimum</span>
+<span class="kw">auto</span> r = a.all();           <span class="comment">// test if all true</span>
+<span class="kw">auto</span> r = a.any();           <span class="comment">// test if any true</span>
+<span class="kw">auto</span> r = a.count_nonzero(); <span class="comment">// count non-zero</span>
+<span class="kw">auto</span> r = a.ptp();           <span class="comment">// peak-to-peak</span>
+<span class="kw">auto</span> r = a.cumsum();        <span class="comment">// cumulative sum</span>
+<span class="kw">auto</span> r = a.cumprod();       <span class="comment">// cumulative product</span></code></div>
+
+	<h3>${T('arr_methods_shape')}</h3>
+<div class="sig"><code><span class="comment">// Shape manipulation</span>
+<span class="kw">auto</span> r = a.reshape({<span class="kw">2</span>, <span class="kw">3</span>});  <span class="comment">// reshape to 2x3</span>
+<span class="kw">auto</span> r = a.transpose();     <span class="comment">// full transpose</span>
+<span class="kw">auto</span> r = a.T();             <span class="comment">// shorthand for transpose()</span>
+<span class="kw">auto</span> r = a.flatten();       <span class="comment">// flatten to 1-D</span>
+<span class="kw">auto</span> r = a.ravel(<span class="str">"F"</span>);      <span class="comment">// flatten with Fortran order</span>
+<span class="kw">auto</span> r = a.squeeze();       <span class="comment">// remove dims of length 1</span>
+<span class="kw">auto</span> r = a.expand_dims(<span class="kw">0</span>); <span class="comment">// add axis at position 0</span>
+<span class="kw">auto</span> r = a.flip(<span class="kw">0</span>);         <span class="comment">// reverse along axis 0</span>
+<span class="kw">auto</span> r = a.roll(<span class="kw">2</span>);         <span class="comment">// roll elements by 2</span>
+<span class="kw">auto</span> r = a.broadcast_to({<span class="kw">3</span>, <span class="kw">4</span>}); <span class="comment">// broadcast to shape</span>
+<span class="kw">auto</span> r = a.tile({<span class="kw">2</span>, <span class="kw">1</span>});    <span class="comment">// tile</span>
+<span class="kw">auto</span> r = a.pad(pw, <span class="str">"constant"</span>, <span class="kw">0.0</span>); <span class="comment">// pad</span>
+<span class="kw">auto</span> r = a.swapaxes(<span class="kw">0</span>, <span class="kw">1</span>); <span class="comment">// swap axes</span></code></div>
+
+	<h3>${T('arr_methods_linalg')}</h3>
+<div class="sig"><code><span class="comment">// Linear algebra</span>
+<span class="kw">auto</span> r = a.dot(b);          <span class="comment">// dot product</span>
+<span class="kw">auto</span> r = a.matmul(b);       <span class="comment">// matrix multiplication</span>
+<span class="kw">auto</span> r = a.trace();         <span class="comment">// sum of diagonal</span>
+<span class="kw">auto</span> r = a.det();           <span class="comment">// determinant</span>
+<span class="kw">auto</span> r = a.inv();           <span class="comment">// matrix inverse</span>
+<span class="kw">auto</span> r = a.conj_transpose(); <span class="comment">// Hermitian transpose</span></code></div>
+
+	<h3>${T('arr_methods_comp')}</h3>
+<div class="sig"><code><span class="comment">// Comparison</span>
+<span class="kw">auto</span> r = a.equal(b);        <span class="comment">// element-wise equality</span>
+<span class="kw">auto</span> r = a.not_equal(b);    <span class="comment">// element-wise inequality</span>
+<span class="kw">auto</span> r = a.greater(b);      <span class="comment">// a > b</span>
+<span class="kw">auto</span> r = a.greater_equal(b);<span class="comment">// a >= b</span>
+<span class="kw">auto</span> r = a.less(b);         <span class="comment">// a < b</span>
+<span class="kw">auto</span> r = a.less_equal(b);   <span class="comment">// a <= b</span></code></div>
+
+	<h3>${T('arr_methods_misc')}</h3>
+<div class="sig"><code><span class="comment">// Other convenience</span>
+<span class="kw">auto</span> r = a.copy();          <span class="comment">// deep copy</span>
+<span class="kw">auto</span> r = a.astype(npc::DType::Int32); <span class="comment">// cast to Int32</span>
+<span class="kw">auto</span> r = a.isnan();         <span class="comment">// test for NaN</span>
+<span class="kw">auto</span> r = a.isinf();         <span class="comment">// test for infinity</span>
+<span class="kw">auto</span> r = a.isfinite();      <span class="comment">// test for finiteness</span>
+<span class="kw">auto</span> r = a.nan_to_num();    <span class="comment">// replace NaN/inf</span>
+<span class="kw">auto</span> r = a.sort();          <span class="comment">// sort along first axis</span>
+<span class="kw">auto</span> r = a.argsort();       <span class="comment">// indices that sort</span>
+<span class="kw">auto</span> r = a.diag(<span class="kw">0</span>);        <span class="comment">// extract/main diagonal</span>
+<span class="kw">auto</span> r = a.clip(lo, hi);    <span class="comment">// clamp to [lo, hi]</span>
+a.fill_diagonal(<span class="kw">42.0</span>);      <span class="comment">// in-place</span>
+<span class="kw">auto</span> r = a.trim_zeros(<span class="str">"fb"</span>);<span class="comment">// trim zeros</span></code></div>
+	<div class="note">
+	<strong>${T('arr_methods_note_title')}</strong> ${T('arr_methods_note_body')}
+	</div>
+`;
+    el.classList.add('on');
+    window.scrollTo(0, 0);
+}
+
+function showPage(name) {
+    hideAll(); currentPage = name;
+    if (name === 'array') return showArray();
+    const el = document.getElementById('page:' + name);
+    if (!el) return;
+    el.querySelectorAll('[data-i18n]').forEach(x => {
+        const v = i18n[x.dataset.i18n];
+        if (v && v[lang]) x.innerHTML = v[lang];
+    });
+    // Buttons
+    el.querySelectorAll('button').forEach(b => { if (b.textContent === 'Copy' || b.textContent === '复制') b.textContent = T('copy_btn'); });
+    el.classList.add('on');
+    const h = '#page:' + name;
+    if (window.location.hash !== h) { _busy = true; window.location.hash = h; setTimeout(() => _busy = false, 50); }
+    updateSidebar('page:' + name); window.scrollTo(0, 0);
+}
+
+// ── Module pages ──────────────────────────────────────────────
+function showModule(mod) {
+    hideAll(); currentPage = ''; currentMod = mod;
+    const mi = MODULES[mod] || {key:mod};
+    const fns = FNS.filter(f => f.m === mod);
+    const mname = T('mod_' + mod) || mi.key;
+    let html = `<a class="back" href="#page:home">&larr; ${T('home')}</a>
+<h1>${mname} <span class="badge">${fns.length} ${T('func_count')}</span></h1>
+<p>${T('mod_desc_' + mod)}</p><table class="fn-table">
+<tr><th>${T('name_label')}</th><th>${T('sig_label')}</th><th>${T('desc_label')}</th></tr>`;
+    html += fns.map(f => `<tr>
+        <td><a class="fn-name" href="#fn:${f.key}" onclick="navigate('#fn:${f.key}');event.preventDefault()">${f.key}</a></td>
+        <td class="fn-sig">${esc(f.sig)}</td>
+        <td class="fn-desc">${TF(f.key,'desc',f.desc)}</td></tr>`).join('');
+    html += '</table>';
+    let page = document.getElementById('mod-page');
+    if (!page) { page = document.createElement('section'); page.id = 'mod-page'; page.className = 'page'; document.getElementById('mod-pages').appendChild(page); }
+    page.innerHTML = html; page.classList.add('on');
+    _busy = true; window.location.hash = '#mod:' + mod; setTimeout(() => _busy = false, 50);
+    updateSidebar('mod:' + mod); window.scrollTo(0, 0);
+}
+
+// ── Function detail ──────────────────────────────────────────
+function showFn(key) {
+    const f = FNS.find(x => x.key === key);
+    if (!f) return;
+    const mname = T('mod_' + f.m);
+    const desc = TF(key, 'desc', f.desc);
+    const notes = TF(key, 'notes', f.notes);
+    const ret = TF(key, 'ret', f.ret);
+    const params = f.params || [];
+
+    let ph = '';
+    if (params.length > 0) {
+        ph = `<h3>${T('params_label')||'Parameters'}</h3><table class="param-tbl">
+        <tr><th>${T('name_label')||'Name'}</th><th>${T('type_label')||'Type'}</th><th>${T('desc_label')||'Description'}</th></tr>`;
+        ph += params.map(p => `<tr><td class="pn">${p.name}</td><td class="pt">${esc(p.type||'')}</td><td>${esc(p.desc||'')}</td></tr>`).join('');
+        ph += '</table>';
+    }
+    let ex = ''; if (f.example) ex = `<h3>${T('example_label')||'Example'}</h3><pre><code>${esc(f.example)}</code></pre>`;
+    let rel = '';
+    if (f.rel && f.rel.length) {
+        rel = `<h3>${T('related_label')||'Related'}</h3>`;
+        rel += f.rel.map(r => `<a style="display:inline-block;margin:4px;padding:4px 10px;background:var(--tag);border-radius:4px;font-size:13px;cursor:pointer" href="#fn:${r}" onclick="navigate('#fn:${r}');event.preventDefault()">${r}</a>`).join(' ');
+    }
+
+    const html = `<a class="back" href="#mod:${f.m}">&larr; ${mname}</a>
+<h1>${f.key} <span class="badge">${mname}</span></h1>
+<p>${esc(desc)}</p><div class="sig">${sigHl(f.sig)}</div>${ph}
+<p><strong>${T('returns_label')||'Returns'}:</strong> ${esc(ret)}</p>
+${notes?'<div class="note">'+esc(notes)+'</div>':''}${ex}${rel}`;
+
+    hideAll();
+    currentPage = ''; currentFn = f;
+    const el = document.getElementById('fn-detail');
+    el.innerHTML = html;
+    el.classList.remove('hidden'); el.classList.add('on');
+    _busy = true; window.location.hash = '#fn:' + key; setTimeout(() => _busy = false, 50);
+    updateSidebar('fn:' + key); window.scrollTo(0, 0);
+}
+
+// ── Helpers ──────────────────────────────────────────────────
+function hideAll() {
+    currentFn = null; currentMod = null;
+    document.querySelectorAll('.page, .hero').forEach(e => e.classList.remove('on'));
+    document.getElementById('fn-detail').classList.add('hidden');
+    const mp = document.getElementById('mod-page'); if (mp) mp.classList.remove('on');
+}
+function updateSidebar(active) {
+    document.querySelectorAll('.sidebar-nav a').forEach(a => {
+        a.classList.toggle('here', active && a.getAttribute('href') === '#' + active);
+    });
+}
+function esc(s) { if (!s) return ''; return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function sigHl(s) { if (!s) return ''; return esc(s).replace(/\b(auto|const|bool|int|double|float|void|size_t|int64_t|uint64_t)\b/g,'<span class="kw">$1</span>').replace(/\b(Array|DType|SVDResult|QRResult|LUResult|EigResult|UniqueResult|HistogramResult|Histogram2DResult|HistogramDDResult|DateTime64|DateTimeUnit|std::vector|std::pair|std::string|std::initializer_list|std::complex)\b/g,'<span class="ty">$1</span>').replace(/npc::\w+/g,'<span class="fn">$&</span>'); }
+function copyCode(b) { const p = b.closest('.qs').querySelector('pre code'); navigator.clipboard.writeText(p.textContent.trim()).then(() => { b.textContent = T('copied'); setTimeout(() => b.textContent = T('copy_btn'), 1500); }); }
+
+// ── Search ───────────────────────────────────────────────────
+function doSearch(q) {
+    const res = document.getElementById('search-results');
+    if (!q || q.length < 1) { res.style.display = 'none'; return; }
+    const lq = q.toLowerCase();
+    const m = FNS.filter(f => f.key.toLowerCase().includes(lq) || (f.desc||'').toLowerCase().includes(lq) || (f.sig||'').toLowerCase().includes(lq)).slice(0, 24);
+    if (!m.length) { res.style.display = 'none'; return; }
+    res.innerHTML = m.map(f => `<div class="search-item" onclick="navigate('#fn:${f.key}');res.style.display='none';document.getElementById('search-box').value=''"><div class="sn">${f.key}</div><div class="sm">${T('mod_'+f.m)}</div></div>`).join('');
+    res.style.display = 'block';
+}
+document.addEventListener('click', e => { if (!e.target.closest('#search-wrap')) document.getElementById('search-results').style.display = 'none'; });
+
+// ── Init ─────────────────────────────────────────────────────
+let _busy = false;
+window.addEventListener('DOMContentLoaded', () => { navigate(window.location.hash || '#page:home'); });
+window.addEventListener('hashchange', () => { if (!_busy) navigate(window.location.hash); });
+</script>
+</body>
+</html>
