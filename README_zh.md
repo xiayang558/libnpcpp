@@ -2,6 +2,10 @@
 
 [libnpc](https://github.com/xiayang558/libnpc) 的 C++17 RAII 封装层。libnpc 是一个纯 C 数值计算库，重新实现了 NumPy 核心功能（300+ 函数，21 个模块），**零 Python 依赖**。
 
+[![Version](https://img.shields.io/badge/version-1.0.0-blue)](https://github.com/xiayang558/libnpcpp)
+[![C++17](https://img.shields.io/badge/C++-17-blue)](https://en.cppreference.com/w/cpp/17)
+[![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
+
 libnpc++ 在 libnpc 的 ~335 个 C 函数之上提供现代 C++ 惯用法：
 
 - **RAII** — 自动内存管理，无需手动调用 `free_array()`
