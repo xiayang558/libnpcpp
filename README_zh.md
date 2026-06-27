@@ -1,5 +1,7 @@
 # libnpc++
 
+[English](README.md) | [中文](README_zh.md) | [📘 API 文档](https://xiayang558.github.io/libnpcpp)
+
 [libnpc](https://github.com/xiayang558/libnpc) 的 C++17 RAII 封装层。libnpc 是一个纯 C 数值计算库，重新实现了 NumPy 核心功能（300+ 函数，21 个模块），**零 Python 依赖**。
 
 [![Version](https://img.shields.io/badge/version-1.0.0-blue)](https://github.com/xiayang558/libnpcpp)
