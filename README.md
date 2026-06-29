@@ -4,7 +4,7 @@
 
 C++17 RAII wrapper for [libnpc](https://github.com/xiayang558/libnpc) — a NumPy-compatible numerical computing library written in pure C with **zero Python dependency**.
 
-[![Version](https://img.shields.io/badge/version-1.0.0-blue)](https://github.com/xiayang558/libnpcpp)
+[![Version](https://img.shields.io/badge/version-1.0.1-blue)](https://github.com/xiayang558/libnpcpp)
 [![C++17](https://img.shields.io/badge/C++-17-blue)](https://en.cppreference.com/w/cpp/17)
 [![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 
