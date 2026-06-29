@@ -132,8 +132,8 @@ int main() {
 |---|---|---|
 | **Array Creation** | `zeros`, `ones`, `full`, `empty`, `arange`, `linspace`, `eye`, `identity`, `array<T>({...})` | 12 |
 | **Arithmetic** | `operator+`, `-`, `*`, `/`, `+=`, `-=`, `*=`, `/=` (Array↔Array, Array↔scalar) | 14 |
-| **Math (Unary)** | `abs`, `sqrt`, `exp`, `log`, `log10`, `log2`, `sin`, `cos`, `tan`, `floor`, `ceil`, `round`, `sign`, etc. | 35 |
-| **Math (Binary)** | `power`, `hypot`, `logaddexp`, `arctan2`, `max`, `min`, `mod`, `clip` | 11 |
+| **Math (Unary)** | `abs`, `sqrt`, `exp`, `log`, `log10`, `log2`, `sin`, `cos`, `tan`, `floor`, `ceil`, `round`, `sign`, `reciprocal`, `cbrt`, `square`, etc. | 41 |
+| **Math (Binary)** | `power`, `hypot`, `logaddexp`, `arctan2`, `max`, `min`, `mod`, `fmod`, `clip` | 12 |
 | **Math (Extra)** | `gcd`, `lcm`, `ldexp`, `left_shift`, `right_shift`, `bincount` | 6 |
 | **Trigonometry** | `sin`, `cos`, `tan`, `asin`, `acos`, `atan`, hyperbolic variants, angle conversion | 22 |
 | **Comparison** | `equal`, `not_equal`, `greater`, `greater_equal`, `less`, `less_equal` | 6 |
@@ -288,11 +288,16 @@ Array floor(const Array& a);     Array ceil(const Array& a);
 Array rint(const Array& a);      Array trunc(const Array& a);
 Array fix(const Array& a);       Array around(const Array& a, int decimals = 0);
 Array sign(const Array& a);      Array sinc(const Array& a);
-Array fabs(const Array& a);      Array heaviside(const Array& x, double h = 0.5);
+Array fabs(const Array& a);      Array absolute(const Array& a);   // abs alias (NumPy naming)
+Array reciprocal(const Array& x);                                 // 1/x
+Array positive(const Array& x);  Array negative(const Array& x);  // +x, -x
+Array cbrt(const Array& x);      Array square(const Array& x);    // ∛x, x²
+Array heaviside(const Array& x, double h = 0.5);
 Array i0(const Array& a);
 Array real(const Array& a);      Array imag(const Array& a);
 Array angle(const Array& z, bool deg = false);
 Array spacing(const Array& a);
+int ndim(const Array& a);                                        // number of dimensions
 
 // Binary (each takes two Arrays and returns Array)
 Array power(const Array& a, const Array& b);
@@ -303,6 +308,7 @@ Array arctan2(const Array& y, const Array& x);
 Array copysign(const Array& x1, const Array& x2);
 Array nextafter(const Array& x1, const Array& x2);
 Array mod(const Array& a, const Array& b);
+Array fmod(const Array& x1, const Array& x2);
 Array maximum(const Array& x1, const Array& x2);
 Array minimum(const Array& x1, const Array& x2);
 Array clip(const Array& arr, const Array& lo, const Array& hi);

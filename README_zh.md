@@ -132,8 +132,8 @@ int main() {
 |---|---|---|
 | **数组创建** | `zeros`, `ones`, `full`, `empty`, `arange`, `linspace`, `eye`, `identity`, `array<T>({...})` | 12 |
 | **算术** | `operator+`, `-`, `*`, `/`, `+=`, `-=`, `*=`, `/=`（数组↔数组，数组↔标量） | 14 |
-| **数学 (一元)** | `abs`, `sqrt`, `exp`, `log`, `log10`, `log2`, `sin`, `cos`, `tan`, `floor`, `ceil`, `round`, `sign` 等 | 35 |
-| **数学 (二元)** | `power`, `hypot`, `logaddexp`, `arctan2`, `max`, `min`, `mod`, `clip` | 11 |
+| **数学 (一元)** | `abs`, `sqrt`, `exp`, `log`, `log10`, `log2`, `sin`, `cos`, `tan`, `floor`, `ceil`, `round`, `sign`, `reciprocal`, `cbrt`, `square` 等 | 41 |
+| **数学 (二元)** | `power`, `hypot`, `logaddexp`, `arctan2`, `max`, `min`, `mod`, `fmod`, `clip` | 12 |
 | **数学 (扩展)** | `gcd`, `lcm`, `ldexp`, `left_shift`, `right_shift`, `bincount` | 6 |
 | **三角** | `sin`, `cos`, `tan`, `asin`, `acos`, `atan`, 双曲变体, 角度转换 | 22 |
 | **比较** | `equal`, `not_equal`, `greater`, `greater_equal`, `less`, `less_equal` | 6 |
@@ -320,11 +320,15 @@ Array floor(const Array& a);     Array ceil(const Array& a);
 Array rint(const Array& a);      Array trunc(const Array& a);
 Array fix(const Array& a);       Array around(const Array& a, int decimals = 0);
 Array sign(const Array& a);      Array sinc(const Array& a);
-Array fabs(const Array& a);      Array heaviside(const Array& x, double h = 0.5);
+Array fabs(const Array& a);      Array absolute(const Array& a);
+Array reciprocal(const Array& x); Array positive(const Array& x);
+Array negative(const Array& x);  Array cbrt(const Array& x);
+Array square(const Array& x);    Array heaviside(const Array& x, double h = 0.5);
 Array i0(const Array& a);
 Array real(const Array& a);      Array imag(const Array& a);
 Array angle(const Array& z, bool deg = false);
 Array spacing(const Array& a);
+int ndim(const Array& a);
 
 // 二元函数（两个 Array 参数，返回 Array）
 Array power(const Array& a, const Array& b);      // 逐元素幂运算 a^b
@@ -335,6 +339,7 @@ Array arctan2(const Array& y, const Array& x);     // 双参数反正切
 Array copysign(const Array& x1, const Array& x2);  // 复制符号
 Array nextafter(const Array& x1, const Array& x2); // 下一个可表示浮点数
 Array mod(const Array& a, const Array& b);         // 逐元素取模
+Array fmod(const Array& x1, const Array& x2);       // 浮点取模
 Array maximum(const Array& x1, const Array& x2);   // 逐元素最大值
 Array minimum(const Array& x1, const Array& x2);   // 逐元素最小值
 Array clip(const Array& arr, const Array& lo, const Array& hi); // 裁剪
