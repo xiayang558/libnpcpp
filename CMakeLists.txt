@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.16)
-project(libnpcpp VERSION 1.0.0
+project(libnpcpp VERSION 1.0.1
     DESCRIPTION "libnpc++ — C++17 wrapper for libnpc — NumPy-compatible numerical computing in C++"
     LANGUAGES C CXX
 )

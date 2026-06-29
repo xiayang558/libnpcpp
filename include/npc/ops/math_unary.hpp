@@ -59,9 +59,15 @@ inline Array around(const Array& a, int decimals = 0) {
 
 // ── Sign / special ───────────────────────────────────────────
 
-inline Array sign(const Array& a)  { return Array(::sign(a.get())); }
-inline Array sinc(const Array& a)  { return Array(::sinc(a.get())); }
-inline Array fabs(const Array& a)  { return Array(::fabs_array(a.get())); }
+inline Array sign(const Array& a)     { return Array(::sign(a.get())); }
+inline Array sinc(const Array& a)     { return Array(::sinc(a.get())); }
+inline Array fabs(const Array& a)     { return Array(::fabs_array(a.get())); }
+inline Array absolute(const Array& a) { return Array(::absolute(a.get())); }
+inline Array reciprocal(const Array& x) { return Array(::reciprocal(x.get())); }
+inline Array positive(const Array& x)   { return Array(::positive(x.get())); }
+inline Array negative(const Array& x)   { return Array(::negative(x.get())); }
+inline Array cbrt(const Array& x)       { return Array(::npc_cbrt(x.get())); }
+inline Array square(const Array& x)     { return Array(::square(x.get())); }
 
 // ── Heaviside step function ──────────────────────────────────
 
@@ -86,6 +92,11 @@ inline Array angle(const Array& z, bool deg = false) {
 
 // ── Float spacing ────────────────────────────────────────────
 
-inline Array spacing(const Array& a) { return Array(::spacing_array(a.get())); }
+inline Array spacing(const Array& a) { return Array(::spacing(a.get())); }
+
+// ── Utility ──────────────────────────────────────────────────
+
+/// Return the number of dimensions of an array.
+inline int ndim(const Array& a) { return ::ndim(a.get()); }
 
 } // namespace npc

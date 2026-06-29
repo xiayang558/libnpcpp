@@ -52,6 +52,11 @@ inline Array mod(const Array& a, const Array& b) {
     return Array(::mod(a.get(), b.get()));
 }
 
+/// Floating-point modulo (like numpy.fmod)
+inline Array fmod(const Array& x1, const Array& x2) {
+    return Array(::fmod_arr(x1.get(), x2.get()));
+}
+
 // ── Element-wise min / max ───────────────────────────────────
 
 inline Array maximum(const Array& x1, const Array& x2) {

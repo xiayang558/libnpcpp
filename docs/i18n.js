@@ -192,6 +192,15 @@ const i18n = {
     arr_methods_note_title: {en:'Free functions still available:', zh:'自由函数仍然可用：'},
     arr_methods_note_body: {en:'All built-in methods have equivalent free functions in the <code>npc::</code> namespace (e.g., <code>a.sum()</code> ≡ <code>npc::sum(a)</code>). Choose whichever style fits your code.',
                             zh:'所有内建方法在 <code>npc::</code> 命名空间中均有等价的自由函数（如 <code>a.sum()</code> ≡ <code>npc::sum(a)</code>）。选择适合你的代码风格即可。'},
+
+        absolute: {desc:'逐元素绝对值（abs 的别名）。'},
+        reciprocal: {desc:'逐元素倒数：1/x。'},
+        positive: {desc:'逐元素一元正号：+x。'},
+        negative: {desc:'逐元素取负：-x。'},
+        cbrt: {desc:'逐元素立方根。'},
+        square: {desc:'逐元素平方：x²。'},
+        fmod: {desc:'浮点取模（类似 numpy.fmod）。'},
+        ndim_fn: {desc:'返回数组的维度数。'},
 fn: {
         zeros:       {desc:'创建全零数组。'},
         ones:        {desc:'创建全一数组。'},

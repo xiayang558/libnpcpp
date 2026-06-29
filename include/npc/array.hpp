@@ -226,6 +226,16 @@ public:
     Array sign() const { return Array(::sign(get())); }
     /// Element-wise power (exponentiation). self^exponent.
     Array power(const Array& exponent) const { return Array(::power(get(), exponent.get())); }
+    /// Element-wise reciprocal: 1/x.
+    Array reciprocal() const { return Array(::reciprocal(get())); }
+    /// Element-wise unary plus: +x.
+    Array positive() const { return Array(::positive(get())); }
+    /// Element-wise negation: -x.
+    Array negative() const { return Array(::negative(get())); }
+    /// Element-wise cube root.
+    Array cbrt() const { return Array(::npc_cbrt(get())); }
+    /// Element-wise square: x².
+    Array square() const { return Array(::square(get())); }
 
     // ── Aggregation methods ───────────────────────────────────
 
@@ -381,6 +391,8 @@ public:
     }
     /// Trim leading/trailing zeros.
     Array trim_zeros(const char* trim = "fb") const { return Array(::trim_zeros(get(), trim)); }
+    /// Element-wise floating-point modulo (like numpy.fmod).
+    Array fmod(const Array& divisor) const { return Array(::fmod_arr(get(), divisor.get())); }
 
     // ── Typed iterators ──────────────────────────────────────
 
